@@ -1,3 +1,4 @@
 ---
 description: Promise - all
 ---
+definetion:  
