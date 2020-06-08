@@ -4,50 +4,38 @@ description: Promise - hand writing
 
 # Promise
 
-其实可以将Promise，参考函数式编程中的容器和map的概念
-
-```text
-function Container(value) {
-    this._value = value;
-    function map(fn) {
-        return new Container(fn(this._value));
-    }
-}
-
-new Container(1).map((value) =>  value + 1) // Container(2)
-```
-我们来看promise的几个特质：
 ```
     new Promise((resolve, reject) => {
         setTimeout(() => {resolve('p1--resolve')}, 1000);
     }).then(res1 => {
-        console.log('get--res--', res) return 'p2--resolve';
-
+        console.log('get--res--', res); 
+        return 'p2--resolve';
     }).then(res2 => {console.log(res)});
 ```
-看上述的小例子我们如何来实现
+看上述的小例子,我们来看promise的几个特质,看看如何来实现
 1. 我们知道一点，promise一旦创建就会执行无法取消。
 2. 其次我们可以看出作为一个promise容器，隐藏了所有的内部值，比如当前promise_state：状态等待中pending、成功fulfilled，失败rejected状态值; 以及内部_value;
 3. Promise的参数为一个函数，其接受两个参数，resolve和reject方法，这两个方法用于改变promise内部状态。
+4. 存在then方法,会在当前promise状态发生变化时，再异步回调then中的回调函数，也就是在resolve或reject调用后调用；因此显而易见我们应该有地方存储then中的回调，当执行resolve或reject的时候再去执行该回调。
 ```
     function Promise(excutor) {
         this._value = null;
         this._state = 'pending';
+        this._fulfilledCbs = [];
+        this._rejectedCbs = [];
         // 使用箭头函数可以让this绑定在词法作用域所定义的外层this也就是Promise，防止this乱指。
         const resolve = (value) => {
             this._state = 'fulfilled';
             this._value = value;
+            this._fulfilledCbs.forEach( _cb => _cb(this._value));
         };
         const reject = (value) => {
             this._state = 'rejected';
-            this._value = value;
+            //... 同resolve
         };
         excutor(resolve, reject);
     }
-```
-那么如何在promise执行完，再去执行then方法呢？
-我们先考虑一下then究竟是什么时候去执行的呢？
-```
+
     Promise.prototype.then = function(onFulfilled, onRejected) {
         if (this._state === 'fulfilled') { // 若状态为fulfilled则立即执行回调
             onFulfilled();
@@ -57,33 +45,17 @@ new Container(1).map((value) =>  value + 1) // Container(2)
             this._fulfilledCbs.push(onFulfilled.bind(this)); 
         }
     }
-
-    function Promise(excutor) {
-        this._value = null;
-        this._state = 'pending';
-        this._fulfilledCbs = [];
-        const resolve = (value) => {
-            this._state = 'fulfilled';
-            this._value = value;
-            this._fulfilledCbs.forEach( _cb => _cb(this._value));
-        };
-        const reject = (value) => {
-            this._state = 'rejected';
-            this._value = value;
-        };
-        excutor(resolve, reject);
-    }
-    \\ test:
+    // test:
     new Promise((resolve, reject) => {
-        setTimeout(() => {resolve('p1--resolve')}, 1000), 
+        setTimeout(() => {resolve('p1--resolve')}, 1000);
+        console.log('p1---start');
     }).then(res1 => {
-        console.log('get--res--', res) return 'p2--resolve';
-
+        console.log('get--res1--', res1); 
     })
     /* 
         output: 
-        resolve-- [Function: resolve]
-        get--res-- p1--resolve
+        p1---start
+        get--res1-- p1--resolve
     */
 ```
 我们完成了promise的异步执行回调。
@@ -94,15 +66,25 @@ promise1执行入参函数异步执行完成 => 调用promise1.resolve => 更改
 调用promise1.then中塞入的_fulfilledCbs；  
 
 ### 链式实现
-一个promise应该可以通过then来返回新的promise实例，从而新的promise通过newPromise.then()构建下一个promise实例，以及配合自身的newPromise.resolve来更改自身状态从而继续推动整个promise链条执行
+Promise在我看来就是函数式编程中的容器, 其then方法也就是容器中map的概念。可以通过map来根据传入的函数来对内部值进行修改，每次都返回一个新的容器来继续。
+```text
+function Container(value) {
+    this._value = value;
+    function map(fn) {
+        return new Container(fn(this._value));
+    }
+}
+new Container(1).map(value =>  value + 1).map( value => value +2) // Container(4)
+```
+所以Promise应该可以通过then来返回新的promise实例，从而新的promise通过newPromise.then()构建下一个promise实例，以及配合自身的newPromise.resolve来更改自身状态从而继续推动整个promise链条执行， 用例如下：
 ```
     new Promise((resolve) => resolve('p1'))
     .then((res) => {
-        console.log(res) // p2
+        console.log('p2---getRes=', res) // p1
         return 'p2';
     })
     .then((res) => {
-        console.log(res)// p2
+        console.log('p3---getRes=', res)// p2
         console.log('p3')
     })
 ```
@@ -112,14 +94,14 @@ p1.constructor => p1入参执行异步函数 => p1.then(在这里创建新的pro
 ```
 Promise.prototype.then = function(onFulfilled, onRejected) {
     if (this._state === 'fulfilled') { // 若状态为fulfilled则立即执行回调
-        new Promise((resolve, reject) => {
+        return new Promise((resolve, reject) => {
             onFulfilled();
             resolve(this._value);
         })
     }
     // 若状态为pending则立即执行回调则应将该回调存下来，当状态更改为fulfilled再去执行，因此增加一个_fulfilledCbs作为回调队列的缓存。
     if (this._state === 'pending') {
-        var p2 = new Promise((resolve, reject) => {
+        return = new Promise((resolve, reject) => {
             // 这里要注意需要将当前p2的resolve给传入到当前p1的this._fulfilledCbs中。当p2的构造函数入参执行完后将其调用p2.resolve改变其状态，resolve中继续执行p2._fulfilledCbs的回调，也就是完成p3
             this._fulfilledCbs.push({
                 onFulfilled: onFulfilled.bind(this),
