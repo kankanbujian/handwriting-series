@@ -66,7 +66,7 @@ promise1执行入参函数异步执行完成 => 调用promise1.resolve => 更改
 调用promise1.then中塞入的_fulfilledCbs；  
 
 ### 链式实现
-Promise在我看来就是函数式编程中的容器, 其then方法也就是容器中map的概念。可以通过map来根据传入的函数来对内部值进行修改，每次都返回一个新的容器来继续。
+Promise在我看来就是函数式编程中的容器, 其then方法也就是容器中map的概念。可以通过map来根据传入的函数来对内部值进行修改，每次都返回一个新的容器来继续。想要了解函数式编程的入口：https://legacy.gitbook.com/book/llh911001/mostly-adequate-guide-chinese
 ```text
 function Container(value) {
     this._value = value;
