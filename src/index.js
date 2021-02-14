@@ -4,7 +4,8 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import store from './store/index';
-import {Provider} from 'react-redux'
+// import {Provider} from 'react-redux';
+import {Provider} from '../my-react-redux/index';
 
 const initialState = {
 	goodList: [{name: 'dad'}]

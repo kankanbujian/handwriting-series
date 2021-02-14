@@ -1,5 +1,6 @@
 import React, {Component} from 'react';
-import {connect} from 'react-redux';
+// import {connect} from 'react-redux';
+import {connect} from '../my-react-redux/index';
 
 
 class CountView extends Component {
@@ -10,17 +11,9 @@ class CountView extends Component {
             it is a countView
             <p>{this.props.count}</p>
             <p>dsadsa</p>
-            <button onClick={() => {
-                this.props.dispatch({
-                    type: 'add'
-                })
-            }}>add</button>
+            <button onClick={this.props.add}>add</button>
             
-            <button onClick={() => {
-                this.props.dispatch({
-                    type: 'minus'
-                })
-            }}>minus</button>
+            <button onClick={this.props.minus}>minus</button>
         </div>
     }
 }
@@ -32,4 +25,7 @@ const mapStateToProps = (state) => {
     })
 }
 
-export default connect(mapStateToProps)(CountView);
+export default connect(mapStateToProps, {
+    add: () => ({type: 'add'}),
+    minus: () => ({type: 'minus'}),
+})(CountView);

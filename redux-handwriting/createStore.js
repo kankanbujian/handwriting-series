@@ -1,6 +1,16 @@
-function createStore(reducer, initialState, middleware) {
+function createStore(reducer, initialState, enhance) {
     let currentState = initialState;
     const cbs = [];
+    
+    if (typeof initialState === 'function' ) {
+        enhance = initialState;
+        initialState = undefined;
+    }
+
+    if (enhance) {
+        return enhance(createStore)(reducer, initialState);
+    }
+
     function getState() {
         return currentState;
     }
@@ -11,7 +21,7 @@ function createStore(reducer, initialState, middleware) {
     }
     function subscribe(cb) {
         cbs.push(cb)
-        return cbs.filter(_cb === cb);
+        return cbs.filter(_cb => _cb === cb);
     }
 
     dispatch({type: 'redux-init'});
