@@ -9,7 +9,7 @@ export const Provider = (props) => {
 }
 
 
-export const connect = (mapStateToProps, mapDispatchToProps) => (WrapperedCmp) => 
+export const connect = (mapStateToProps, mapDispatchToProps = {}) => (WrapperedCmp) => 
     props => {
         
         const store = useContext(Context);
@@ -41,7 +41,7 @@ export const connect = (mapStateToProps, mapDispatchToProps) => (WrapperedCmp) =
 const getDispatchProps = (mapDispatchToProps, dispatch) => {
     return  Object.keys(mapDispatchToProps).reduce((ret, cur) => {
         ret[cur] = () => {
-            dispatch(mapDispatchToProps[aaacur]());
+            dispatch(mapDispatchToProps[cur]());
         };
         return ret;
     }, {});
