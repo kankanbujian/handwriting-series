@@ -1,26 +1,29 @@
-// import {}
-import { Input } from "_antd@4.15.0@antd"
+import React, {useEffect} from 'react';
+import FormContext from './FormContext';
+import useForm from './useForm';
 
-const 
+
+const Form = ({children, form,  onFinish, onFinishFailed, ...rest}) => {
+    const [formInstance] = useForm(form);
 
 
-const Form = ({children, ...rest}) => {
+    useEffect(() => {
+        formInstance.createCallback({
+            onFinish,
+            onFinishFailed
+        })
+    }, []);
 
-    
-    return <div>
-    {children}
-    </div>
+    return <form onSubmit={(event) => {
+            event.preventDefault();
+            formInstance.submit();
+        }}>
+        <FormContext.Provider value={formInstance} >
+            <div>
+                {children}
+            </div>
+        </FormContext.Provider>
+    </form>
 }
 
-
-
-
-const Item = ({children, ...props}) => {
-
-    
-    return <div>
-        {children}
-    </div>
-}
-Form.Item = Item;
 export default Form;
